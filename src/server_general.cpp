@@ -786,7 +786,7 @@ int Host2Index(const char* hostName) {
 	Replicas[0].host = hostList.at(i).host;
 	Replicas[0].port = PORT_FOR_REPLICA;
 	Replicas[1].host = hostList.at(i + 1).host;
-	Replicas[1].port = PORT_FOR_REPLICA;
+	Replicas[1].port = PORT_FOR_REPLICA + 1;
 
 }
 
@@ -863,7 +863,7 @@ int main(int argc, char *argv[]) {
 	Replicas[0].sock = -1;
 
 	Replicas[1].host = hostList.at((myIndex + 2) % nHost).host;
-	Replicas[1].port = PORT_FOR_REPLICA;
+	Replicas[1].port = PORT_FOR_REPLICA + 1;
 	Replicas[1].sock = -1;
 
 	/*
