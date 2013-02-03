@@ -5,17 +5,35 @@
 CXX=g++
 CC=gcc
 CPPFLAGS=-Xlinker -zmuldefs
-CFLAGS=-Llib -L/usr/local/lib -Iinc
+#CFLAGS=-Llib -L/usr/local/lib -Iinc
+CFLAGS=-Llib -Iinc
 LFLAGS=-lzht
 LFLAGS+=-lstdc++ -lrt -lpthread -lm -lc -lprotobuf -lprotobuf-c
 
-PROTOBUF_HOME=/usr/local/include/google/protobuf #your Google Protobuf location here :) (Default is:/usr/local/include/google/protobuf) Additional NOTE: This may be useless if you added PROTOBUF to your LD_LIBRARY_PATH
+#PROTOBUF_HOME=/usr/local/include/google/protobuf #your Google Protobuf location here :) (Default is:/usr/local/include/google/protobuf) Additional NOTE: This may be useless if you added PROTOBUF to your LD_LIBRARY_PATH
+
+
+PROTOBUF_INC=/export/home/sxie/projects/gprotobuf/protobuf/include
+PROTOBUF_LIB=/export/home/sxie/projects/gprotobuf/protobuf/lib
+PROTOBUF_INC2=/export/home/sxie/projects/gprotobuf/protobuf-c/include
+PROTOBUF_LIB2=/export/home/sxie/projects/gprotobuf/protobuf-c/lib
+PROTOC=/export/home/sxie/projects/gprotobuf/protobuf/bin/protoc
+PROTOC_C=/export/home/sxie/projects/gprotobuf/protobuf-c/bin/protoc-c
+
+
+
 
 #SOURCES=$(wildcard src/common/*.cpp)
 #OBJECTS=$(SOURCES:.cpp=.o)
 OBJECTS=obj/meta.pb.o obj/meta.pb-c.o obj/net_util.o obj/novoht.o obj/zht_util.o obj/lru_cache.o
 
-CFLAGS+=-I$(PROTOBUF_HOME)
+#CFLAGS+=-I$(PROTOBUF_HOME)
+
+CFLAGS+=-I$(PROTOBUF_INC)
+CFLAGS+=-L$(PROTOBUF_LIB)
+CFLAGS+=-I$(PROTOBUF_INC2)
+CFLAGS+=-L$(PROTOBUF_LIB2)
+
 
 .PHONY: clean examples clients
 
@@ -58,13 +76,13 @@ obj/meta.pb-c.o: src/common/meta.pb-c.c
 
 gProto: src/misc/meta.proto
 	rm src/common/*.pb.cpp inc/*.pb.h
-	protoc -I=src/misc/ --cpp_out=src/common src/misc/meta.proto
+	$(PROTOC) -I=src/misc/ --cpp_out=src/common src/misc/meta.proto
 	mv src/common/*.h inc/
 	rename 's/\.cc/.cpp/' src/common/*.cc
 	
 gProto-c: src/misc/meta.proto
 	rm src/common/*.pb-c.c inc/*.pb-c.h
-	protoc-c -I=src/misc/ --c_out=src/common src/misc/meta.proto
+	$(PROTOC_C) -I=src/misc/ --c_out=src/common src/misc/meta.proto
 	mv src/common/*.h inc/
 	
 clean:

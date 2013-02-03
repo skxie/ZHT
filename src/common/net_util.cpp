@@ -148,17 +148,24 @@ int generalSendTo(const char* host, int port, int to_sock, const char* buff, int
 	int sentSize;
 
 //	cout << buff_size << "{" << buff << "}" << endl;
-
+//	cout << "generalSendTo............1" << endl;
 	if (tcp == true) {
+//		cout << "generalSendTo.............2" << endl;
 		sentSize = send(to_sock, (const void*) buff, buff_size, 0); // may try other flags......................
+//		cout << to_sock << " " << "{" << buff << "}" << buff_size << endl;
+//		cout << "generalSendTo.............3" << endl;
 		if (sentSize < 0) {
+//			cout << "generalSendTo...........4" << endl;
 			cerr << "net_util: generalSendTo: error on generalSendTo: "
 					<< strerror(errno) << endl;
+//			cout << "generalSendTo...........5" << endl;
 			return -1;
 		}
+//		cout << "generalSendTo.............6" << endl;
 	} else { //UDP
 		sentSize = udpSendTo(to_sock, host, port, buff, buffsize);
 	}
+//	cout << "generalSendTo.............7" << endl;
 	return sentSize;
 }
 
@@ -224,17 +231,21 @@ int generalReceive(int sock, void* recvBuff, int maxRecvSize,
 		struct sockaddr_in & recvAddr, int flag, bool tcp) {
 	int recvSize = 0;
 	if (tcp == true) {
+//		cout << "generalReceive........1" << endl;
 		recvSize = recv(sock, recvBuff, maxRecvSize, flag);
+//		cout << "generalReceive........2" << endl;
 	} else { //UDP
 		recvSize = udpRecvFrom(sock, recvBuff, maxRecvSize, recvAddr, flag);
 	}
-
+//	cout << "generalReceive........3" << endl;
 	if (recvSize < 0) {
+//		cout << "generalReceive........4" << endl;
 		cerr << "net_util: generalReceive(): error on receive: "
 				<< strerror(errno) << endl;
+//		cout << "generalReceive........5" << endl;
 		return -1;
 	}
-
+//	cout << "generalReceive........6" << endl;
 	return recvSize;
 
 }

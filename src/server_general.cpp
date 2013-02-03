@@ -207,22 +207,20 @@ int32_t HB_insert(NoVoHT *map, Package &package) {
 		return 0;
 }
 
-int32_t HB_append(NoVoHT *map, Package &package){
-        string value = package.SerializeAsString();
+int32_t HB_append(NoVoHT *map, Package &package) {
+	string value = package.SerializeAsString();
 //      cout << "Insert to pmap...value = " << value << endl;
-        string key = package.virtualpath();
+	string key = package.virtualpath();
 //      cout<<"key:"<<key<<endl;
 //      cout<<"value:"<<value<<endl;
-        int ret = map->append(key, value);
+	int ret = map->append(key, value);
 //      cout << "end inserting, ret = " << ret << endl;
-        if (ret != 0) {
-                cerr << "Append error: ret = " << ret << endl;
-                return -4;
-        }
-        else
-                return 0;
+	if (ret != 0) {
+		cerr << "Append error: ret = " << ret << endl;
+		return -4;
+	} else
+		return 0;
 }
-
 
 string HB_lookup(NoVoHT *map, Package &package) {
 //      string value;
@@ -372,7 +370,6 @@ int32_t HB_insert(map<string, string> &hmap, Package &package) {
 		return 0;
 }
 
-
 string HB_lookup(map<string, string> &hmap, Package &package) {
 	string value;
 //              cout << "lookup in HB_lookup" << endl;
@@ -471,7 +468,7 @@ int makeConnForReplica(struct HostEntity &dest) {
 	int index = -1;
 //	cout << "makeConnForReplica ..........  1" << endl;
 
-	//	cout<<"str2Sock: dest.sock = "<<dest.sock<<endl;
+//	cout<<"str2Sock: dest.sock = "<<dest.sock<<endl;
 	if (dest.sock < 0) {
 //		cout << "makeConnForReplica ..........  2" << endl;
 		//sock = makeClientSocket((char*) dest.host.c_str(), dest.port, true);
@@ -529,7 +526,7 @@ int general_replica(Package package, struct HostEntity &destination) {
 //        generalSendTCP(sock, str.c_str());
 	generalSendTo(destination.host.c_str(), destination.port, sock, str.c_str(),
 			str.size(), TCP);
-//      cout << "socket_replica--------3" << endl;
+///      cout << "socket_replica--------3" << endl;
 	void *buff_return = (void*) malloc(sizeof(int32_t));
 	//      int r = d3_svr_recv(sock, buff_return, sizeof(int32_t), 0, &recv_addr);
 	// int r = generalReveiveTCP(sock, buff_return, sizeof buff_return, 0);
@@ -541,6 +538,7 @@ int general_replica(Package package, struct HostEntity &destination) {
 	if (r < 0) {
 		cerr << "general_replica: got bad news from relica: " << r << endl;
 	}
+//	close(sock);
 }
 
 bool thread_run = 0;
@@ -608,33 +606,6 @@ void dataService(int client_sock, void* buff, sockaddr_in fromAddr,
 	}
 		break;
 
-
-	case 4: {
-                if (package.virtualpath().empty()) {
-                        operation_status = -1;
-                } else {
-                                     // cout << "Server: append..." << endl;
-                        //operation_status = HB_insert(db, package);
-                        operation_status = HB_append(pmap, package);
-//                      cout << "Server: append ret = "<< operation_status <<endl;
-                        //cout<<"Inserted: key: "<< package.virtualpath()<<endl;
-                        //              cout << "insert finished, return: " << operation_status << endl;
-                }
-                buff1 = &operation_status;
-                if (TCP == true) {
-                        r = send(client_sock, &operation_status, sizeof(int32_t), 0);
-                } else {
-                        r = sendto(client_sock, &operation_status, sizeof(int32_t), 0,
-                                        (struct sockaddr *) &fromAddr, sizeof(struct sockaddr));
-                }
-
-                if (r <= 0) {
-                        cout  << "Append: Server could not send acknowledgement to client: sendto r = " << r << endl;
-                } 
-
-        }
-		break;
-	
 	case 2: {
 		//remove
 		//		cout << "Remove..." << endl;
@@ -701,6 +672,33 @@ void dataService(int client_sock, void* buff, sockaddr_in fromAddr,
 		}
 	}
 		break;
+	case 4: {
+		if (package.virtualpath().empty()) {
+			operation_status = -1;
+		} else {
+			// cout << "Server: append..." << endl;
+			//operation_status = HB_insert(db, package);
+			operation_status = HB_append(pmap, package);
+			//                      cout << "Server: append ret = "<< operation_status <<endl;
+			//cout<<"Inserted: key: "<< package.virtualpath()<<endl;
+			//              cout << "insert finished, return: " << operation_status << endl;
+		}
+		buff1 = &operation_status;
+		if (TCP == true) {
+			r = send(client_sock, &operation_status, sizeof(int32_t), 0);
+		} else {
+			r = sendto(client_sock, &operation_status, sizeof(int32_t), 0,
+					(struct sockaddr *) &fromAddr, sizeof(struct sockaddr));
+		}
+
+		if (r <= 0) {
+			cout
+					<< "Append: Server could not send acknowledgement to client: sendto r = "
+					<< r << endl;
+		}
+
+	}
+		break;
 	case 99: { //shut the server
 //		cout << "Server will be shut shortly." << endl;
 		turn_off = 1; //turn off service.
@@ -724,6 +722,7 @@ void dataService(int client_sock, void* buff, sockaddr_in fromAddr,
 
 //	cout << "Before handle Replication " << endl;
 	if (Env::NUM_REPLICAS > 0) { // infinite loop if not limited by replicano, coz it will send the replica to itself infinitely
+	//	cout << "NUM_REPLICAS IS " << Env::NUM_REPLICAS << endl;
 		if (package.replicano() == 5) {
 			if (package.operation() == 3 || package.operation() == 2) {
 
@@ -735,7 +734,7 @@ void dataService(int client_sock, void* buff, sockaddr_in fromAddr,
 					n = n % hostList.size();
 					struct HostEntity destination = hostList.at(n);
 					general_replica(package, Replicas[i - 1]);
-					//				cout << "Replica remove: sent to " << destination.port 	<< " and before send replicano() = "<< package.replicano() << endl;
+					//cout << "i is " << i << "Replica remove: sent to " << Replicas[i-1].port 	<< " and host is" << Replicas[i-1].host << " and before send replicano() = "<< package.replicano() << endl;
 
 //				cout << "Replication: i = " << i << endl;
 					//numReplica--;
@@ -786,7 +785,7 @@ int Host2Index(const char* hostName) {
 	Replicas[0].host = hostList.at(i).host;
 	Replicas[0].port = PORT_FOR_REPLICA;
 	Replicas[1].host = hostList.at(i + 1).host;
-	Replicas[1].port = PORT_FOR_REPLICA + 1;
+	Replicas[1].port = PORT_FOR_REPLICA + 2;
 
 }
 
@@ -801,11 +800,8 @@ int main(int argc, char *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	LISTEN_PORT = argv[1];
-	string membershipFile(argv[2]);
-        string cfgFile(argv[3]);
+	char* ipaddress = argv[5];
 	char* isTCP = argv[4];
-        char* userName = argv[5];
 
 	if (!strcmp("TCP", isTCP)) {
 		TCP = true;
@@ -815,17 +811,16 @@ int main(int argc, char *argv[]) {
 //cout<<"UDP"<<endl;
 	}
 
+	LISTEN_PORT = argv[1];
+	string cfgFile(argv[3]);
 	string randStr = randomString(5);
 //cout<<"1"<<endl;
-/*
-//			for BGP
+	/*		for BGP
 	 const string cmd = "cat /proc/personality.sh | grep BG_PSETORG";
 	 string torusID = executeShell(cmd);
 	 torusID.resize(torusID.size()-1);
 	 srand( getTime_msec()+ myhash(torusID.c_str(), 10000000) );
-*/
-
-
+	 */
 //	string fileName = "hashmap.data"; //= "hashmap.data."+randStr;
 //	string fileName = "hashmap.data." + randStr;
 //	string fileName = "hashmap.txt";
@@ -835,11 +830,14 @@ int main(int argc, char *argv[]) {
 	map<string, string> hashMap;
 	hmap = hashMap;
 //cout<<"2"<<endl;
+	string membershipFile(argv[2]);
 	hostList = getMembership(membershipFile);
 	nHost = hostList.size();
 //cout<<"3"<<endl;
-	Host2Index("localhost");
+	//Host2Index("localhost");
+	Host2Index(ipaddress);
 	if (Env::setconfigvariables(cfgFile) != 0) {
+
 		cout << "Server: Not able to read configuration file." << endl;
 		exit(1);
 	}
@@ -857,13 +855,14 @@ int main(int argc, char *argv[]) {
 	 string myIP = checkIP;
 	 int myIndex = Host2Index(checkIP.c_str());
 	 */
-	int myIndex = Host2Index("localhost");
+	//int myIndex = Host2Index("localhost");
+	int myIndex = Host2Index(ipaddress);
 	Replicas[0].host = hostList.at((myIndex + 1) % nHost).host;
 	Replicas[0].port = PORT_FOR_REPLICA;
 	Replicas[0].sock = -1;
 
 	Replicas[1].host = hostList.at((myIndex + 2) % nHost).host;
-	Replicas[1].port = PORT_FOR_REPLICA + 1;
+	Replicas[1].port = PORT_FOR_REPLICA + 2;
 	Replicas[1].sock = -1;
 
 	/*
@@ -919,15 +918,8 @@ int main(int argc, char *argv[]) {
 		perror("epoll_ctl");
 		abort();
 	}
-
-
-/*	//For BGP
-	string cmd_2 = string("echo $IP >> /intrepid-fs0/users/") +string(userName) + string("/persistent/Register_$NNODE");
-	//      system("echo $IP >> /intrepid-fs0/users/tonglin/persistent/Register_$NNODE"); for BGP
-        system(cmd_2.c_str());
-*/
-
-//	cout <<"Server started"<<endl;
+//cout<<"about to write Register_$NNODE"<<endl;	
+//	system("echo $IP >> /intrepid-fs0/users/tonglin/persistent/Register_$NNODE"); for BGP
 	// Buffer where events are returned
 	events = (epoll_event *) calloc(MAXEVENTS, sizeof event);
 	char buf[Env::MAX_MSG_SIZE];
@@ -942,7 +934,7 @@ int main(int argc, char *argv[]) {
 	threadArg argu;
 	argu.myQueue = &dataQueue;
 	argu.novoht = pmap;
-//	int r = pthread_create(&idThread, NULL, dataServiceThread, (void*) &argu);
+	int r = pthread_create(&idThread, NULL, dataServiceThread, (void*) &argu);
 
 	while (1) {
 		int n, i;
@@ -1019,13 +1011,9 @@ int main(int argc, char *argv[]) {
 					int recvSize = udpRecvFrom(events[i].data.fd, recvBuff,
 							Env::MAX_MSG_SIZE, fromAddr, 0);
 					//cout<<"epool server receive size = "<<recvSize<<endl;
-					//Queued version
-					/*
 					DataEvent data(events[i].data.fd, recvBuff, fromAddr);
 					dataQueue.push(data);
-					*/
-
-					dataService(events[i].data.fd, recvBuff, fromAddr, pmap);
+					//dataService(events[i].data.fd, recvBuff, fromAddr, pmap);
 					memset(recvBuff, '\0', sizeof(recvBuff));
 				}
 			} else {
@@ -1074,11 +1062,10 @@ int main(int argc, char *argv[]) {
 							fromAddr.sin_port = 0;
 							fromAddr.sin_addr.s_addr = 0;
 
-							/* 	//Queued version
 							DataEvent data(events[i].data.fd, buf, fromAddr);
 							dataQueue.push(data);
-							*/
-							dataService(events[i].data.fd, buf, fromAddr, pmap);
+
+							//dataService(events[i].data.fd, buf, fromAddr, pmap);
 							memset(buf, '\0', sizeof(buf));
 //						free(buf);
 
